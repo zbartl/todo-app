@@ -3,15 +3,64 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-
 	"github.com/gobridge-kr/todo-app/server/database"
+	"net/http"
+	"strings"
 )
 
 // TodoController is a MVC controller to handle todo requests
 type TodoController struct {
 	database *database.Database
 }
+
+func (t *TodoController) ServeHTTP(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	parts := strings.Split(r.URL.Path, "/")
+	route := parts[1]
+	if route != "todo" {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	
+	hasID := len(parts) > 2
+	var id string
+	if hasID {
+		id = parts[2]
+	}
+
+	switch r.Method {
+	case "GET":
+		if hasID {
+			t.GetOne(w, r, id)
+		} else {
+			t.GetAll(w, r)
+		}
+	case "POST":
+		if hasID {
+			t.PostOne(w, r, id)
+		} else {
+			t.PostAll(w, r)
+		}
+	case "PATCH":
+		if hasID {
+			t.PatchOne(w, r, id)
+		} else {
+			t.PatchAll(w, r)
+		}
+	case "DELETE":
+		if hasID {
+			t.DeleteOne(w, r, id)
+		} else {
+			t.DeleteAll(w, r)
+		}
+	case "OPTIONS":
+		t.Options(w, r)
+	default:
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	}
+} 
 
 // GetOne retrieves and shows a todo by given ID
 func (t *TodoController) GetOne(w http.ResponseWriter, r *http.Request, id string) {
