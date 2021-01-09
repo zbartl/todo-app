@@ -36,7 +36,7 @@ func configureJwt() *jwtea.Provider {
 			ClientSecret:   viper.GetString("jwt.third_party.secret"),
 			ThirdPartyAudience:   viper.GetString("jwt.third_party.audience"),
 		},
-		Secret:   viper.GetString("jwt.secret"),
+		Secret:   viper.GetString("jwt.secret_key"),
 		Issuer:   viper.GetString("jwt.issuer"),
 		Audience: viper.GetString("jwt.audience"),
 	}

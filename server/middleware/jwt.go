@@ -13,12 +13,13 @@ type JwtMiddleware struct {
 func (mw JwtMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	token := r.Header.Get("Authorization")
 	
-	if token != "" && mw.jwt.Validate(token) {
+	err := mw.jwt.Validate(token)
+	if err != nil {
 		mw.next.ServeHTTP(w, r)
 		return
 	}
 	
-	http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	http.Error(w, err.Error(), http.StatusUnauthorized)
 	return
 }
 
