@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"github.com/gobridge-kr/todo-app/server"
 	"github.com/gobridge-kr/todo-app/server/database"
-	"github.com/gobridge-kr/todo-app/server/utils"
+	"github.com/gobridge-kr/todo-app/server/config"
 	"github.com/spf13/viper"
+	"github.com/zbartl/jwtea"
 	"log"
 	"net/http"
 )
@@ -20,22 +21,22 @@ func main() {
 	}
 
 	port, baseUrl, db := configureDb()
+	thirdPartyAuthConfig := &config.ThirdPartyAuthConfiguration{
+		Url:   viper.GetString("jwt.third_party.url"),
+		ClientId:   viper.GetString("jwt.third_party.cid"),
+		ClientSecret:   viper.GetString("jwt.third_party.secret"),
+		ThirdPartyAudience:   viper.GetString("jwt.third_party.audience"),
+	}
 	jwt := configureJwt()
 
 	mux := http.NewServeMux()
 	s := server.New(baseUrl)
-	s.ConfigureRoutes(mux, db, jwt)
+	s.ConfigureRoutes(mux, db, jwt, thirdPartyAuthConfig)
 	s.Serve(mux, port)
 }
 
 func configureJwt() *jwtea.Provider {
 	jwtConfig := &jwtea.Configuration{
-		ThirdPartyConfig: jwtea.ThirdPartyConfiguration{
-			Url:   viper.GetString("jwt.third_party.url"),
-			ClientId:   viper.GetString("jwt.third_party.cid"),
-			ClientSecret:   viper.GetString("jwt.third_party.secret"),
-			ThirdPartyAudience:   viper.GetString("jwt.third_party.audience"),
-		},
 		Secret:   viper.GetString("jwt.secret_key"),
 		Issuer:   viper.GetString("jwt.issuer"),
 		Audience: viper.GetString("jwt.audience"),

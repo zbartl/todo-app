@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/gobridge-kr/todo-app/server/utils"
+	"github.com/gobridge-kr/todo-app/server/config"
+	"github.com/zbartl/jwtea"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 
 type AuthHandler struct{
 	jwt *jwtea.Provider
+	thirdPartyAuthConfig *config.ThirdPartyAuthConfiguration
 }
 
 type AuthRequest struct {
@@ -40,16 +42,16 @@ func (h *AuthHandler) ServeHTTP(
 	}
 	
 	payload := &AuthPayload{
-		ClientId: h.jwt.Config.ThirdPartyConfig.ClientId,
-		ClientSecret: h.jwt.Config.ThirdPartyConfig.ClientSecret,
-		Audience: h.jwt.Config.ThirdPartyConfig.ThirdPartyAudience,
+		ClientId: h.thirdPartyAuthConfig.ClientId,
+		ClientSecret: h.thirdPartyAuthConfig.ClientSecret,
+		Audience: h.thirdPartyAuthConfig.ThirdPartyAudience,
 		GrantType:	"password",
 		UserName: 	body.UserName,
 		Password: 	body.Password,
 	}
 
 	jsonPayload, _ := json.Marshal(payload)
-	req, _ := http.NewRequest("POST", h.jwt.Config.ThirdPartyConfig.Url, bytes.NewBuffer(jsonPayload))
+	req, _ := http.NewRequest("POST", h.thirdPartyAuthConfig.Url, bytes.NewBuffer(jsonPayload))
 	req.Header.Add("content-type", "application/json")
 
 	res, _ := http.DefaultClient.Do(req)
@@ -71,8 +73,9 @@ func (h *AuthHandler) ServeHTTP(
 	json.NewEncoder(w).Encode(token)
 }
 
-func Auth(jwt *jwtea.Provider) *AuthHandler {
+func Auth(jwt *jwtea.Provider, thirdPartyAuthConfig *config.ThirdPartyAuthConfiguration) *AuthHandler {
 	return &AuthHandler{
 		jwt: jwt,
+		thirdPartyAuthConfig: thirdPartyAuthConfig,
 	}
 }

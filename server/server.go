@@ -1,11 +1,12 @@
 package server
 
 import (
+	"github.com/gobridge-kr/todo-app/server/config"
 	"github.com/gobridge-kr/todo-app/server/controller"
 	"github.com/gobridge-kr/todo-app/server/database"
 	"github.com/gobridge-kr/todo-app/server/handler"
 	"github.com/gobridge-kr/todo-app/server/middleware"
-	jwtea "github.com/gobridge-kr/todo-app/server/utils"
+	"github.com/zbartl/jwtea"
 	"net/http"
 )
 
@@ -30,17 +31,18 @@ func (s *Server) Middleware(middleware func(w http.ResponseWriter, r *http.Reque
 func (s *Server) ConfigureRoutes(mux *http.ServeMux,
 	database *database.Database,
 	jwt *jwtea.Provider,
+	thirdPartyAuthConfig *config.ThirdPartyAuthConfiguration,
 ) {
 	mux.Handle(
 		"/todo",
-		middleware.RequiredAuth(controller.Todo(database), jwt),
+		jwtea.RequiredJwtAuthentication(controller.Todo(database), jwt),
 	)
 	
 	mux.Handle(
 		"/user/auth",
 		http.StripPrefix(
 			"/user",
-			&middleware.AllowAnonymous{Next: handler.Auth(jwt)},
+			&middleware.AllowAnonymous{Next: handler.Auth(jwt, thirdPartyAuthConfig)},
 		),
 	)
 }
